@@ -2,6 +2,8 @@
 
 这是一个高度定制化的 Claude Code CLI 配置文件库，集成了高级规则 (Rules)、自动化钩子 (Hooks)、增强技能 (Skills) 以及优化的 `settings.json`。通过使用这些配置，你可以将你的 Claude Code CLI 从一个基础的辅助工具升级为一个具备自我管理、强力审查和全中文交互能力的顶级 AI 编程代理。
 
+这是非常牛逼的配置，汇聚了我安装的所有核心技能、钩子和插件，旨在提供极致的 AI 开发体验。
+
 ## 🌟 核心功能
 
 ### 1. 自动汉化与全中文交互 (CRITICAL)
@@ -37,7 +39,7 @@
 - `rules/`: 涵盖 TypeScript, Python, Golang 等多语言及通用开发规范。
 - `hooks/`: 所有的自动化脚本（JS/Shell），负责监控、防护和状态显示。
 - `skills/`: 预设的增强技能包。
-- `settings.json`: 经过优化的全局配置文件（已脱敏）。
+- `settings.json`: 经过优化的全局配置文件。
 - `CLAUDE.md`: 行为准则指南。
 - `AGENTS.md`: 代理编排与角色定义。
 
@@ -55,8 +57,8 @@
    cp -r rules/ hooks/ skills/ settings.json CLAUDE.md AGENTS.md ~/.claude/
    ```
 
-3. **配置你的 Token**：
-   打开 `~/.claude/settings.json`，将 `"your-token-here"` 替换为你真实的 `ANTHROPIC_AUTH_TOKEN`。
+3. **配置你的环境**：
+   打开 `~/.claude/settings.json`，检查并确认你的 `ANTHROPIC_AUTH_TOKEN` 等环境变量。
 
 4. **重启 Claude Code**：
    重新运行 `claude` 命令，体验全新的自动化工作流！
