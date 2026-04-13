@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "ln-512-tech-debt-cleaner",
+  "owner": "levnikolaevich",
+  "repo": "claude-code-skills",
+  "path": "skills-catalog/ln-512-tech-debt-cleaner",
+  "branch": "master",
+  "sha": "fee3b392732b4353a038b5be9e55c4c95774a934",
+  "source": "manual"
+}

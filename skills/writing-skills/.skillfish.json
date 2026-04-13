@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "writing-skills",
+  "owner": "rsmdt",
+  "repo": "the-startup",
+  "path": "plugins/start/skills/writing-skills",
+  "branch": "main",
+  "sha": "09c08ebd861738a94f78b9c672132c3bdc2408e7",
+  "source": "manual"
+}

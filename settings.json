@@ -1,0 +1,236 @@
+{
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "your-token-here",
+    "ANTHROPIC_BASE_URL": "http://localhost:20128/v1",
+    "ANTHROPIC_MODEL": "zd",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "zd",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "zd",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "zd",
+    "ANTHROPIC_REASONING_MODEL": "zd",
+    "ENABLE_TOOL_SEARCH": "true",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "0"
+  },
+  "enabledPlugins": {
+    "ecc@ecc": true,
+    "engineering-skills@claude-code-skills": true,
+    "engineering-advanced-skills@claude-code-skills": true,
+    "skill-security-auditor@claude-code-skills": true,
+    "ast-index@ast-index-marketplace": true,
+    "superpowers@claude-plugins-official": true,
+    "planning-with-files@planning-with-files": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "code-review@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "example-skills@anthropic-agent-skills": true,
+    "ralph-loop@claude-plugins-official": true,
+    "claude-hud@claude-hud": true,
+    "audit-project@agentsys": true,
+    "scheduler@claude-scheduler": true,
+    "sentry-skills@sentry-skills": true,
+    "babysitter@a5c.ai": true,
+    "dbs@dontbesilent-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "ecc": {
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/everything-claude-code"
+      }
+    },
+    "claude-code-skills": {
+      "source": {
+        "source": "github",
+        "repo": "alirezarezvani/claude-skills"
+      }
+    },
+    "ast-index-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "defendend/Claude-ast-index-search"
+      }
+    },
+    "planning-with-files": {
+      "source": {
+        "source": "github",
+        "repo": "OthmanAdi/planning-with-files"
+      }
+    },
+    "ui-ux-pro-max-skill": {
+      "source": {
+        "source": "github",
+        "repo": "nextlevelbuilder/ui-ux-pro-max-skill"
+      }
+    },
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    },
+    "claude-hud": {
+      "source": {
+        "source": "github",
+        "repo": "jarrodwatts/claude-hud"
+      }
+    },
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    },
+    "agentsys": {
+      "source": {
+        "source": "github",
+        "repo": "agent-sh/agentsys"
+      }
+    },
+    "context-engineering-kit": {
+      "source": {
+        "source": "github",
+        "repo": "NeoLabHQ/context-engineering-kit"
+      }
+    },
+    "claude-code-harness-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "Chachamaru127/claude-code-harness"
+      }
+    },
+    "claude-scheduler": {
+      "source": {
+        "source": "github",
+        "repo": "jshchnz/claude-code-scheduler"
+      }
+    },
+    "sentry-skills": {
+      "source": {
+        "source": "github",
+        "repo": "getsentry/skills"
+      }
+    },
+    "a5c.ai": {
+      "source": {
+        "source": "github",
+        "repo": "a5c-ai/babysitter"
+      }
+    },
+    "dontbesilent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "dontbesilent2025/dbskill"
+      }
+    }
+  },
+  "effortLevel": "high",
+  "skipDangerousModePermissionPrompt": true,
+  "default_provider": "qwen",
+  "providers": {
+    "gemini": {
+      "models": [
+        "gemini-2.5-pro",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-preview-09-2025",
+        "gemini-3-pro-preview-11-2025",
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-pro-preview-06-05"
+      ],
+      "path": "/gemini-cli-oauth"
+    },
+    "qwen": {
+      "models": [
+        "qwen3-coder-plus",
+        "qwen3-coder-flash"
+      ],
+      "path": "/openai-qwen-oauth"
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/Administrator.DESKTOP-EGNE9ND/.claude/hooks/gsd-check-update.js\""
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash C:/Users/Administrator.DESKTOP-EGNE9ND/.claude/hooks/gsd-session-state.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|MultiEdit|Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/Administrator.DESKTOP-EGNE9ND/.claude/hooks/gsd-context-monitor.js\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash C:/Users/Administrator.DESKTOP-EGNE9ND/.claude/hooks/gsd-phase-boundary.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/Administrator.DESKTOP-EGNE9ND/.claude/hooks/gsd-prompt-guard.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/Administrator.DESKTOP-EGNE9ND/.claude/hooks/gsd-read-guard.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/Administrator.DESKTOP-EGNE9ND/.claude/hooks/gsd-workflow-guard.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash C:/Users/Administrator.DESKTOP-EGNE9ND/.claude/hooks/gsd-validate-commit.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node \"C:/Users/Administrator.DESKTOP-EGNE9ND/.claude/hooks/gsd-statusline.js\""
+  }
+}

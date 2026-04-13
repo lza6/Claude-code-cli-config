@@ -1,0 +1,151 @@
+\begin{thebibliography}{23}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}[1]{doi: \discretionary{}{}{}#1}\fi
+
+\bibitem[Bai et~al.(2022)]{bai2022constitutional}
+Yuntao Bai, Saurav Kadavath, Sandipan Kundu, Amanda Askell, Jackson Kernion,
+  Andy Jones, Anna Chen, Anna Goldie, Azalia Mirhoseini, Cameron McKinnon,
+  et~al.
+\newblock Constitutional {AI}: Harmlessness from {AI} feedback.
+\newblock \emph{arXiv preprint arXiv:2212.08073}, 2022.
+
+\bibitem[{Anthropic}(2025)]{claudesonnet4}
+{Anthropic}.
+\newblock Claude sonnet 4, 2025.
+\newblock URL \url{https://www.anthropic.com}.
+
+\bibitem[Cohen(1992)]{cohen1992power}
+Jacob Cohen.
+\newblock A power primer.
+\newblock \emph{Psychological Bulletin}, 112\penalty0 (1):\penalty0 155--159,
+  1992.
+
+\bibitem[Deci and Ryan(2000)]{deci2000self}
+Edward~L Deci and Richard~M Ryan.
+\newblock The ``what'' and ``why'' of goal pursuits: Human needs and the
+  self-determination of behavior.
+\newblock \emph{Psychological Inquiry}, 11\penalty0 (4):\penalty0 227--268,
+  2000.
+
+\bibitem[Easterbrook(1959)]{easterbrook1959effect}
+James~A Easterbrook.
+\newblock The effect of emotion on cue utilization and the organization of
+  behavior.
+\newblock \emph{Psychological Review}, 66\penalty0 (3):\penalty0 183--201,
+  1959.
+
+\bibitem[Edmondson(1999)]{edmondson1999psychological}
+Amy Edmondson.
+\newblock Psychological safety and learning behavior in work teams.
+\newblock \emph{Administrative Science Quarterly}, 44\penalty0 (2):\penalty0
+  350--383, 1999.
+
+\bibitem[{GitHub Community}(2025)]{puaprompts2025}
+{GitHub Community}.
+\newblock {PUA} prompts: Fear-driven system prompts for {AI} coding agents,
+  2025.
+\newblock URL \url{https://github.com/tanweai/pua}.
+\newblock GitHub repository, 13k+ stars as of March 2026.
+
+\bibitem[Higgins(1997)]{higgins1997beyond}
+E~Tory Higgins.
+\newblock Beyond pleasure and pain.
+\newblock \emph{American Psychologist}, 52\penalty0 (12):\penalty0 1280--1300,
+  1997.
+
+\bibitem[Kruskal and Wallis(1952)]{kruskal1952use}
+William~H Kruskal and W~Allen Wallis.
+\newblock Use of ranks in one-criterion variance analysis.
+\newblock \emph{Journal of the American Statistical Association}, 47\penalty0
+  (260):\penalty0 583--621, 1952.
+
+\bibitem[Laozi(-400)]{laozi}
+Laozi.
+\newblock \emph{Dao De Jing}.
+\newblock circa 6th--4th century BCE.
+
+\bibitem[Mann and Whitney(1947)]{mann1947test}
+Henry~B Mann and Donald~R Whitney.
+\newblock On a test of whether one of two random variables is stochastically
+  larger than the other.
+\newblock \emph{The Annals of Mathematical Statistics}, 18\penalty0
+  (1):\penalty0 50--60, 1947.
+
+\bibitem[March(1991)]{march1991exploration}
+James~G March.
+\newblock Exploration and exploitation in organizational learning.
+\newblock \emph{Organization Science}, 2\penalty0 (1):\penalty0 71--87, 1991.
+
+\bibitem[{\"O}hman and Mineka(2001)]{ohman2001fears}
+Arne {\"O}hman and Susan Mineka.
+\newblock Fears, phobias, and preparedness: Toward an evolved module of fear
+  and fear learning.
+\newblock \emph{Psychological Review}, 108\penalty0 (3):\penalty0 483--522,
+  2001.
+
+\bibitem[Ryan and Deci(2000)]{ryan2000intrinsic}
+Richard~M Ryan and Edward~L Deci.
+\newblock Intrinsic and extrinsic motivations: Classic definitions and new
+  directions.
+\newblock \emph{Contemporary Educational Psychology}, 25\penalty0
+  (1):\penalty0 54--67, 2000.
+
+\bibitem[Sharma et~al.(2023)]{sharma2023sycophancy}
+Mrinank Sharma, Meg Tong, Tomasz Korbak, David Duvenaud, Amanda Askell,
+  Samuel~R Bowman, Newton Cheng, Esin Durmus, Zac Hatfield-Dodds, Scott~R
+  Johnston, et~al.
+\newblock Towards understanding sycophancy in language models.
+\newblock \emph{arXiv preprint arXiv:2310.13548}, 2023.
+
+\bibitem[Shields et~al.(2016)]{shields2016stress}
+Grant~S Shields, Matthew~A Sazma, and Andrew~P Yonelinas.
+\newblock The effects of acute stress on core executive functions: A
+  meta-analysis and comparison with cortisol.
+\newblock \emph{Neuroscience \& Biobehavioral Reviews}, 68:\penalty0 651--668,
+  2016.
+
+\bibitem[Simon(1956)]{simon1956rational}
+Herbert~A Simon.
+\newblock Rational choice and the structure of the environment.
+\newblock \emph{Psychological Review}, 63\penalty0 (2):\penalty0 129--138,
+  1956.
+
+\bibitem[Turpin et~al.(2023)]{turpin2023unfaithful}
+Miles Turpin, Julian Michael, Ethan Perez, and Samuel~R Bowman.
+\newblock Language models don't always say what they think: Unfaithful
+  explanations in chain-of-thought prompting.
+\newblock \emph{Advances in Neural Information Processing Systems}, 36, 2023.
+
+\bibitem[Wei et~al.(2024)]{wei2024instruction}
+Jerry Wei, Da~Huang, Yifeng Lu, Daphne Ippolito, Sewon Yun, Aakanksha
+  Chowdhery, and Quoc~V Le.
+\newblock Simple synthetic data reduces sycophancy in large language models.
+\newblock \emph{arXiv preprint arXiv:2401.10474}, 2024.
+
+\bibitem[White et~al.(2023)]{white2023prompt}
+Jules White, Quchen Fu, Sam Hays, Michael Sandborn, Carlos Olea, Henry
+  Gilbert, Ashraf Elnashar, Jesse Spencer-Smith, and Douglas~C Schmidt.
+\newblock A prompt pattern catalog to enhance prompt engineering with
+  {ChatGPT}.
+\newblock In \emph{arXiv preprint arXiv:2302.11382}, 2023.
+
+\bibitem[Wilcoxon(1945)]{wilcoxon1945individual}
+Frank Wilcoxon.
+\newblock Individual comparisons by ranking methods.
+\newblock \emph{Biometrics Bulletin}, 1\penalty0 (6):\penalty0 80--83, 1945.
+
+\bibitem[{Wuji Labs}(2025)]{nopua2025}
+{Wuji Labs}.
+\newblock {NoPUA}: Trust-driven methodology for {AI} coding agents, 2025.
+\newblock URL \url{https://github.com/wuji-labs/nopua}.
+
+\bibitem[Zhou et~al.(2023)]{zhou2023large}
+Yongchao Zhou, Andrei~Ioan Muresanu, Zhiwei Han, Keiran Paster, Silviu Pitis,
+  Harris Chan, and Jimmy Ba.
+\newblock Large language models are human-level prompt engineers.
+\newblock \emph{arXiv preprint arXiv:2211.01910}, 2023.
+
+\end{thebibliography}

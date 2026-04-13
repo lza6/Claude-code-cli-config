@@ -1,0 +1,9 @@
+{
+  "name": "deep-research-pro",
+  "version": "1.0.0",
+  "description": "多源深度研究 Agent。搜索网络、综合研究结果，并交付带引用的研究报告。无需 API Key。",
+  "keywords": ["research", "search", "analysis", "citations", "reports", "duckduckgo"],
+  "license": "MIT",
+  "author": "AstralSage",
+  "files": ["SKILL.md", "scripts/research", "package.json"]
+}

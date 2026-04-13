@@ -1,0 +1,17 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12 Portable) (preloaded format=pdflatex.fmt)
+ restricted \write18 enabled.
+entering extended mode
+(nopua-paper.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2025-12-24>
+
+(C:\Users\xiuluart\scoop\apps\miktex\current\texmfs\install\tex/latex/base\arti
+cle.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+
+(C:\Users\xiuluart\scoop\apps\miktex\current\texmfs\install\tex/latex/base\size
+11.clo))
+(C:\Users\xiuluart\scoop\apps\miktex\current\texmfs\install\tex/latex/base\inpu
+tenc.sty)
+(C:\Users\xiuluart\scoop\apps\miktex\current\texmfs\install\tex/latex/base\font
+enc.sty)

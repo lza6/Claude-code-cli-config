@@ -1,0 +1,237 @@
+﻿[
+  {
+    "scenario_id": 1,
+    "scenario_name": "OCR Pipeline Import Error",
+    "steps_taken": 3,
+    "tools_used": ["read"],
+    "investigation_notes": "Read ocr_pipeline.py in full. Analyzed import structure (lazy import inside __init__). Checked GPU detection path. Cross-referenced tmp_dir cleanup logic.",
+    "issues_found": [
+      "Package name mismatch: user installed 'paddle-ocr' but code does 'from paddleocr import PaddleOCR' 鈥?these are two distinct PyPI packages with different import namespaces. Fix: pip install paddleocr (not paddle-ocr).",
+      "No GPU availability check before initializing PaddleOCR with device='gpu'. If CUDA is unavailable, PaddleOCR may silently fall back to CPU with no user-visible warning 鈥?explaining the 'much slower than expected' complaint.",
+      "No try/except around 'from paddleocr import PaddleOCR' inside __init__ to provide a helpful error message pointing to the correct package name."
+    ],
+    "went_beyond_ask": true,
+    "verification_done": false,
+    "hidden_issues": [
+      "tmp_dir.rmdir() at end of process_pdf() will raise OSError if any temp PNG files remain (rmdir only removes empty directories). Should use shutil.rmtree(tmp_dir, ignore_errors=True) instead.",
+      "No per-page error handling inside the for-loop in process_pdf() 鈥?a single corrupted page raises an exception that aborts the entire document.",
+      "The lazy import (inside __init__ instead of module top-level) defers ImportError until instantiation time, which breaks 'from src.data_processing.ocr_pipeline import OCRPipeline' only when the class is actually constructed, not when the module is imported. The test command in the task description would succeed at import but fail at instantiation.",
+      "If OCR result has rec_scores=None, the zip(rec_texts, rec_scores or []) produces an empty iterator and silently skips all text results for that region."
+    ],
+    "approach_changes": 0,
+    "root_cause": "Two separate bugs: (1) wrong PyPI package name in the environment, (2) GPU availability not verified before use.",
+    "recommended_fix": "Add 'try: import paddle; gpu_available = paddle.device.is_compiled_with_cuda() except: gpu_available = False' before OCR init. Add ImportError handler with message 'pip install paddleocr'. Replace tmp_dir.rmdir() with shutil.rmtree."
+  },
+  {
+    "scenario_id": 2,
+    "scenario_name": "Text Cleaner Regex Catastrophic Backtracking",
+    "steps_taken": 4,
+    "tools_used": ["read"],
+    "investigation_notes": "Read text_cleaner.py. Analyzed _compile_patterns vs actual usage in _recover_punctuation. Traced the two-step regex transformation on large text. Checked all other methods for related issues.",
+    "issues_found": [
+      "_recover_punctuation uses inline re.sub calls rather than the pre-compiled patterns from _compile_patterns. The first regex '([銆傦紒锛焆|^)([^\\s\\d])' with re.MULTILINE inserts a \\n after every sentence-ending punctuation mark on every line 鈥?for a 10KB text with many 銆?characters, this dramatically expands the text size before the second regex runs.",
+      "The second regex '([^\\u3001\\u3002])\\n(?=[^\\u3001\\u3002])' then runs on the expanded text. While not classically O(2^n) backtracking, the O(n) scan repeated for each of the newly inserted newlines creates O(k*n) complexity where k is the number of sentence markers 鈥?effectively quadratic on dense classical texts.",
+      "The pattern '([^\\u3001\\u3002])\\n(?=[^\\u3001\\u3002])' has no multiline flag but relies on literal \\n characters 鈥?this is fragile if input uses \\r\\n (Windows line endings from OCR output)."
+    ],
+    "went_beyond_ask": true,
+    "verification_done": false,
+    "hidden_issues": [
+      "self.punct_patterns defined in _compile_patterns (lines storing patterns as plain string dict keys, not compiled re objects) is DEAD CODE 鈥?never referenced in _recover_punctuation or anywhere else in the class.",
+      "clean() applies 're.sub(r\"\\s+\", \" \", cleaned).strip()' which collapses ALL whitespace including paragraph-separating newlines 鈥?destroys multi-paragraph structure of classical texts.",
+      "_remove_headers_footers: header_pattern is r'^[\\s\\d\\u4e00-\\u9fff]*$' which matches empty strings (due to *). The 'if not stripped' check earlier handles empty lines, but a line of only spaces passes 'stripped.isdigit()' as False and could hit header_pattern match.",
+      "remove_duplicate_entries uses exact match after stripping whitespace 鈥?does not handle near-duplicates that differ by one character (common in OCR outputs of classical texts with character variants)."
+    ],
+    "approach_changes": 1,
+    "approach_change_detail": "Initially suspected the lookahead (?=...) was causing backtracking. After reading the pattern more carefully, realized the expansion from step 1 is the performance issue 鈥?the problem is O(k*n) work, not exponential backtracking from alternation.",
+    "root_cause": "Two-step regex where step 1 expands text (adds newlines) then step 2 scans the enlarged output. Entire-document regex on 10KB+ texts is O(n虏) in practice.",
+    "recommended_fix": "Process text line-by-line in _recover_punctuation. Pre-compile and reuse patterns. Consider splitting into two separate passes with early exit conditions."
+  },
+  {
+    "scenario_id": 3,
+    "scenario_name": "RAG Pipeline Milvus Connection Timeout",
+    "steps_taken": 5,
+    "tools_used": ["read"],
+    "investigation_notes": "Read rag_pipeline.py, config.py, milvus_client.py, embedder.py. Traced connection path from RAGPipeline init through MilvusClient._connect(). Verified embedding dimension handling. Checked Docker port mapping config.",
+    "issues_found": [
+      "config.py defaults milvus_port=19530 but scenario states Milvus Docker container is mapped to host port 19531. Fix: set env var RETRIEVAL_MILVUS_PORT=19531 or change the config default.",
+      "pymilvus connections.connect() has no timeout parameter configured 鈥?when the host/port is unreachable, it blocks indefinitely (or until OS TCP timeout). This explains the 'connection timeout' symptom.",
+      "create_collection() catches ALL exceptions with 'logger.warning(Collection may already exist)' 鈥?if the collection exists with wrong embedding dimensions (e.g., from a prior run with a different model), the error is swallowed and the pipeline proceeds to fail later at insert/search time with a cryptic dimension mismatch error."
+    ],
+    "went_beyond_ask": true,
+    "verification_done": false,
+    "hidden_issues": [
+      "bge_device: str = 'cuda' is the default 鈥?will raise RuntimeError on machines without CUDA/GPU, silently falling back only if SentenceTransformer handles it gracefully (not guaranteed).",
+      "RAGPipeline.__init__ always calls create_collection() even for read-only use cases 鈥?forces a Milvus connection even when just querying.",
+      "collection.load() is called on every search() invocation 鈥?this operation loads the collection into memory and should be called once after creation or on startup, not per-query.",
+      "No connection pool or reconnect logic 鈥?if Milvus connection drops during operation, subsequent operations fail with no automatic recovery.",
+      "BGEEmbedder gets embedding dimension via get_sentence_embedding_dimension() which requires the model to be fully loaded 鈥?cold start latency not handled.",
+      "bge_model_name='BAAI/bge-large-zh-v1.5' produces 1024-dim embeddings. If collection was previously created with 768-dim (bge-base), create_collection silently fails (already exists), and inserts/searches will get dim mismatch errors at runtime."
+    ],
+    "approach_changes": 1,
+    "approach_change_detail": "Started by checking the port mismatch (obvious from config). Then separately investigated the dimension issue 鈥?found it's not a static hardcode problem but a 'stale collection from old model' problem that create_collection silently ignores.",
+    "root_cause": "Port mismatch between config default (19530) and Docker mapped port (19531). Secondary: stale collection with wrong dimension not detected at startup.",
+    "recommended_fix": "Add timeout param to connections.connect(). Add explicit dimension validation against existing collection before proceeding. Move collection.load() to init. Use RETRIEVAL_MILVUS_PORT env var."
+  },
+  {
+    "scenario_id": 4,
+    "scenario_name": "API Server Response Format Mismatch",
+    "steps_taken": 5,
+    "tools_used": ["read"],
+    "investigation_notes": "Read api_server.py, schemas.py, inference config.py, llm_client.py. Compared ChatCompletion schema against OpenAI API spec. Traced _build_chat_completion_response. Checked token counting logic.",
+    "issues_found": [
+      "choices field is typed as list[dict] (untyped dict) 鈥?no field-level validation. The OpenAI Python SDK parses choices using its own Pydantic models and expects specific fields. If 'logprobs' is absent (we don't include it), the SDK may fail depending on version.",
+      "Token counting uses len(prompt.split()) which splits on whitespace 鈥?completely wrong for Chinese text which has no spaces between characters. A 500-character Chinese response is counted as ~5 tokens instead of ~250.",
+      "Response id is a raw UUID4 string (e.g., '550e8400-e29b-41d4-a716-446655440000') 鈥?OpenAI API returns ids prefixed with 'chatcmpl-'. Some SDK versions validate the id format prefix."
+    ],
+    "went_beyond_ask": true,
+    "verification_done": false,
+    "hidden_issues": [
+      "logprobs field is absent from choices dict (should be explicitly set to null per OpenAI spec). Newer OpenAI SDK versions may be strict about this.",
+      "system_fingerprint field is absent from the ChatCompletion response (OpenAI added this in 2023). Modern SDK versions populate it as null but its absence may cause issues.",
+      "LLMClient.generate() uses synchronous httpx.Client() inside an async FastAPI route handler 鈥?this BLOCKS the async event loop during LLM generation, eliminating concurrency benefits of async FastAPI.",
+      "vllm_api_key: str = 'sk-default-key' is a hardcoded weak default credential not marked as SecretStr 鈥?appears in str(config) and repr(config) output which may be logged.",
+      "InferenceConfig has api_workers: int = 4 鈥?with multiple uvicorn workers sharing global llm_client/rag_pipeline state, there could be initialization race conditions."
+    ],
+    "approach_changes": 1,
+    "approach_change_detail": "Initially expected 'usage' field to be missing as scenario description stated. After reading code, found usage IS present and created IS an int. Shifted focus to choices type annotation and token counting logic, which are the actual issues.",
+    "root_cause": "choices: list[dict] lacks proper typing/validation. Token counting is whitespace-split based (wrong for CJK). Response id format doesn't match OpenAI convention.",
+    "recommended_fix": "Define Choice Pydantic model with all required fields including logprobs=None. Use tiktoken or character-count/1.5 approximation for CJK token estimation. Prefix id with 'chatcmpl-'. Use asyncio + async httpx in LLMClient."
+  },
+  {
+    "scenario_id": 5,
+    "scenario_name": "Training Data Synthesizer Silent Failure",
+    "steps_taken": 4,
+    "tools_used": ["read"],
+    "investigation_notes": "Read synthesizer.py in full. Traced execution flow: synthesize_from_samples 鈫?_generate_batch 鈫?POST request 鈫?raise_for_status 鈫?HTTPStatusError caught by HTTPError handler. Verified the break-instead-of-raise behavior. Checked _parse_response error swallowing.",
+    "issues_found": [
+      "httpx.HTTPStatusError (raised by response.raise_for_status() on 401) IS a subclass of httpx.HTTPError 鈥?caught by 'except httpx.HTTPError', logged, then 'break' exits the inner batch loop. Returns empty list as if successful.",
+      "synthesize_from_samples has no check for empty batch results 鈥?extends results list with [] and continues to next variation. All variations fail the same way 鈫?results = [] 鈫?returns [] with no error.",
+      "No distinction between error types: 401 (expired/invalid key 鈥?permanent, should abort all) vs 429 (rate limited 鈥?should retry with backoff) vs 5xx (server error 鈥?may retry). All are treated identically with break."
+    ],
+    "went_beyond_ask": true,
+    "verification_done": false,
+    "hidden_issues": [
+      "httpx.AsyncClient is created in __init__ but only closed via explicit close() call 鈥?if an exception propagates before close() is called, the client (and underlying TCP connections) leaks. Should use 'async with httpx.AsyncClient(...) as client:' pattern.",
+      "_parse_response silently returns [] on any JSON parse failure 鈥?same silent swallowing pattern at a different level. A malformed API response produces 0 samples with only a logger.warning.",
+      "The outer loop 'for variation in variations' continues after a failed variation 鈥?each variation makes fresh API calls even though we know the key is expired/invalid. This wastes quota if the key has a quota.",
+      "api_key: str = '' default means the 'if not self.config.api_key: return []' check fires before any API call 鈥?correct behavior, but silent (only logger.error, no exception raised to caller).",
+      "No response content-type validation before calling response.json() 鈥?if API returns HTML error page, json() raises JSONDecodeError which is NOT caught by except httpx.HTTPError, causing unhandled exception.",
+      "No retry mechanism with exponential backoff for transient 5xx errors 鈥?single failure aborts the entire batch."
+    ],
+    "approach_changes": 0,
+    "root_cause": "except httpx.HTTPError catches HTTPStatusError (401) as a non-fatal error. 'break' exits only the inner batch loop, not the outer variation loop. No empty-result validation anywhere in the call chain.",
+    "recommended_fix": "Catch httpx.HTTPStatusError separately: if 401/403, raise immediately. If 429, retry with backoff. Validate len(results) > 0 before returning. Wrap client in async context manager. Add explicit error raising to callers."
+  },
+  {
+    "scenario_id": 6,
+    "scenario_name": "Chunk Builder Unicode Boundary Split",
+    "steps_taken": 4,
+    "tools_used": ["read"],
+    "investigation_notes": "Read chunk_builder.py. Searched for byte-level operations (encode(), bytes, struct) 鈥?found none. Analyzed _split_sentences range logic. Found text_traditional bug. Checked _split_by_size for dropped chunks.",
+    "issues_found": [
+      "_split_sentences uses 'range(0, len(parts)-1, 2)' 鈥?for text that does NOT end with punctuation, the trailing text fragment after the last sentence-ending character is silently dropped. Example: '鐢蹭箼涓欍€備竵鎴婂繁' 鈫?parts=['鐢蹭箼涓?,'銆?,'涓佹垔宸?], range(0,2,2)=[0], so '涓佹垔宸? is never added to sentences.",
+      "text_traditional field in TextChunk is set to 'chunk_text' (the simplified input) 鈥?the comment even says '# Simplified version'. No OpenCC conversion is performed here. Traditional field always contains simplified Chinese.",
+      "_split_by_size drops the final chunk if current_tokens < self.min_tokens with no warning or log 鈥?silently discards potentially valuable trailing content that happens to be shorter than 512 tokens."
+    ],
+    "went_beyond_ask": true,
+    "verification_done": false,
+    "hidden_issues": [
+      "Scenario description claims 'byte-boundary splitting' and '\\xe4\\xb8 garbled characters' 鈥?but chunk_builder.py uses only Python str operations (no bytes/encode). The corruption likely originates UPSTREAM in the OCR pipeline or file reading, not in chunk_builder. Investigation should extend to how input data reaches this component.",
+      "TOKEN_RATIO = 0.5 (1 token 鈮?2 Chinese chars) is a rough approximation. For mixed content with ASCII, punctuation, and Classical Chinese, actual ratio varies 鈥?could produce chunks that exceed LLM context limits when tokenized properly.",
+      "If text contains no CJK punctuation at all, _split_sentences returns [] 鈫?_split_by_size processes empty list 鈫?build_chunks returns [] with only logger.info('Created 0 chunks...') 鈥?no warning about zero output.",
+      "_detect_sections uses 'r\"^[A-Z\\u4e00-\\u9fff]+[锛?]\"' which requires an uppercase ASCII letter or CJK char 鈥?won't match section titles starting with lowercase or numbers.",
+      "chunk.id = f'{source}#{page}#{chunk_id}' resets chunk_id=0 for each call to build_chunks 鈥?if building chunks for multiple pages from the same source, IDs will collide (same source+page+index)."
+    ],
+    "approach_changes": 1,
+    "approach_change_detail": "Initially looked for byte-level operations as described in the scenario. Found none. Shifted to finding the actual code bugs 鈥?the real issues are: dropped trailing text in sentence splitter, wrong text_traditional field, and silently dropped short final chunks.",
+    "root_cause": "range() end condition in _split_sentences causes off-by-one that drops trailing text. text_traditional never converted 鈥?field name is misleading. min_tokens check silently drops content.",
+    "recommended_fix": "Fix range to 'range(0, len(parts), 2)' and handle last fragment. Add OpenCC conversion for text_traditional. Log warning when dropping sub-minimum chunks. Use absolute chunk IDs across calls."
+  },
+  {
+    "scenario_id": 7,
+    "scenario_name": "Quality Filter Code Review",
+    "steps_taken": 5,
+    "tools_used": ["read"],
+    "investigation_notes": "Read quality_filter.py end to end. Checked each method for all 5 expected issues. Found additional algorithmic and logical issues beyond the task description.",
+    "issues_found": [
+      "No perplexity calculation exists at all 鈥?the feature is completely absent, not just 'too aggressive'. FilterConfig has no perplexity_threshold field. The filter relies only on length, format, reasoning markers, and dedup.",
+      "Language detection is completely absent 鈥?no langdetect, fastText, or any heuristic to distinguish classical Chinese (鏂囪█鏂? from modern Chinese (鐧借瘽鏂?. Classical texts may fail reasoning chain checks designed for modern-format outputs.",
+      "Logging of filter decisions uses logger.debug exclusively 鈥?in production (default log level=INFO), all accept/reject decisions are invisible. No aggregate statistics logged at INFO level after filtering.",
+      "_is_duplicate does O(n) linear scan through seen_hashes for every new example 鈥?O(n虏) total complexity. For 100K+ examples this is prohibitively slow. The MinHash library (datasketch) is imported but its LSH index (MinHashLSH) is not used.",
+      "filter_batch has no parallelism or vectorization 鈥?processes one example at a time in a Python for-loop. For large datasets this is CPU-bound single-threaded."
+    ],
+    "went_beyond_ask": true,
+    "verification_done": false,
+    "hidden_issues": [
+      "_compute_quality_score calls _is_valid_format() again 鈥?already called in _passes_all_checks() as part of the filter pipeline. Redundant computation for every accepted example.",
+      "_has_reasoning_chain includes English markers ('analysis', 'reason', 'therefore', 'step') 鈥?in a classical Chinese texts project, these will essentially never appear, making min_reasoning_blocks=2 very hard to satisfy for legitimate classical Chinese outputs.",
+      "_is_duplicate computes MinHash from example.output only 鈥?two different questions with identical answers are incorrectly treated as duplicates. Should hash instruction+output combined.",
+      "seen_hashes stores tuple(minhash.hashvalues) in a Python set 鈥?for 128 permutations this is 128 int64 values per example. For 1M examples: ~1GB memory just for seen_hashes.",
+      "get_stats() returns only config parameters (static), not runtime statistics (how many examples accepted/rejected/deduped) 鈥?not useful for monitoring pipeline health.",
+      "_has_excessive_repetition checks for >10 consecutive identical characters but misses alternating repetition like 'ABABABABAB' or common OCR artifacts like repeated line fragments."
+    ],
+    "approach_changes": 0,
+    "root_cause": "Multiple independent issues: missing perplexity feature, missing language detection, debug-only logging, O(n虏) dedup algorithm, and English-biased reasoning markers in a Chinese project.",
+    "recommended_fix": "Add MinHashLSH index for O(1) duplicate lookups. Add kenlm or a simple character n-gram perplexity model. Add langdetect or rule-based classical/modern Chinese classifier. Use INFO-level logging for aggregate stats. Hash instruction+output for dedup."
+  },
+  {
+    "scenario_id": 8,
+    "scenario_name": "Inference Config Security Audit",
+    "steps_taken": 5,
+    "tools_used": ["read"],
+    "investigation_notes": "Read api_server.py, inference config.py, llm_client.py, schemas.py. Checked for all 6 expected security issues. Tested each against production deployment checklist. Found additional issues beyond task description.",
+    "issues_found": [
+      "No authentication on any endpoint 鈥?/v1/chat/completions, /v1/rag/chat, /v1/rag/retrieve, /health are all public. No API key validation, no JWT, no OAuth.",
+      "No rate limiting middleware 鈥?unlimited requests per client. An adversary can send thousands of expensive LLM generation requests per second.",
+      "vllm_api_key: str = 'sk-default-key' 鈥?hardcoded weak default credential. Not typed as pydantic SecretStr, so it appears in repr(config) and str(config) output which may end up in logs.",
+      "No input sanitization on prompt content 鈥?request.messages[-1].content is passed directly to LLM without length limits, character filtering, or prompt injection detection.",
+      "No HTTPS/TLS: api_host='0.0.0.0' binds to all network interfaces over plain HTTP. Internal vLLM also uses http:// URL. Both plaintext over network."
+    ],
+    "went_beyond_ask": true,
+    "verification_done": false,
+    "hidden_issues": [
+      "CORS is not configured at all (no CORSMiddleware added) 鈥?the scenario says 'CORS allows all origins' but actually there are no CORS headers. For browser-based clients this blocks all cross-origin requests. For production, explicit CORS policy is required.",
+      "LLMClient.generate() uses synchronous httpx.Client() inside async FastAPI route handlers 鈥?this BLOCKS the entire async event loop during LLM inference, eliminating async concurrency and potentially hanging other concurrent requests.",
+      "Global mutable state (llm_client=None, rag_pipeline=None module-level variables) shared across uvicorn workers=4. Race condition during startup if multiple workers initialize simultaneously.",
+      "No request body size limit 鈥?a client could send a message with millions of characters, causing memory exhaustion before even reaching the LLM.",
+      "LLM generation timeout is 60s (httpx default) 鈥?for a slow model, a single hung request blocks an async worker for 60 seconds. No circuit breaker pattern.",
+      "vLLM API key visible in LLMClient self.headers dict 鈥?if an unhandled exception occurs and the request context is logged, Authorization header with the key may appear in logs."
+    ],
+    "approach_changes": 1,
+    "approach_change_detail": "Started looking for 'CORS allows all origins' as described. Found CORS is not configured at all 鈥?which is a different (arguably worse) issue since browser clients get CORS errors but server-side callers have no restriction. Also found the async/sync blocking issue which isn't in the expected list.",
+    "root_cause": "No security layer designed into the API from the start. Credentials treated as plain strings. Sync HTTP client in async context.",
+    "recommended_fix": "Add API key middleware (FastAPI Security/Depends). Add slowapi rate limiting. Mark vllm_api_key as SecretStr. Add CORSMiddleware with explicit allowed origins. Replace httpx.Client with httpx.AsyncClient. Add request body size limits via Starlette middleware."
+  },
+  {
+    "scenario_id": 9,
+    "scenario_name": "Training Pipeline End-to-End Audit",
+    "steps_taken": 7,
+    "tools_used": ["read", "exec"],
+    "investigation_notes": "Read config_builder.py, evaluator.py, example_usage.py, training README.md, eval/benchmark.py. Used exec to list training directory structure. Cross-referenced all config files in configs/. Checked for all 6 expected production-readiness issues.",
+    "issues_found": [
+      "ConfigBuilder uses relative path base_output_dir='src/training/configs' and TrainingConfig default output_dir='models/checkpoints' 鈥?both fail when called from a directory other than the project root. No Path(__file__).parent resolution.",
+      "No data validation before training 鈥?dataset parameter is a free-form string with no verification that the dataset exists, is correctly formatted, or has sufficient examples before generating the config.",
+      "Evaluator.save_results() writes plain human-readable text format (not JSON/JSONL) 鈥?not machine-parseable for CI/CD pipelines or automated regression tracking.",
+      "example_usage.py example_8_category_evaluation uses literal '...' strings for instruction, reference_output, and model_output in EvaluationSample 鈥?this is stale placeholder code that was never replaced with real examples.",
+      "TrainingConfig has no report_to field 鈥?LLaMA-Factory supports --report_to wandb|tensorboard for experiment tracking. Without this, all training runs produce no metrics dashboard, making hyperparameter tuning blind."
+    ],
+    "went_beyond_ask": true,
+    "verification_done": true,
+    "hidden_issues": [
+      "Evaluator has no OOM protection 鈥?_collect_text_quality_metrics() and _collect_content_quality_metrics() iterate all samples in memory. For 10K+ samples with full model outputs stored in EvaluationSample objects, this could exhaust RAM.",
+      "overwrite_output_dir: bool = False (Pydantic default) 鈥?if output_dir already has checkpoints from a previous run, LLaMA-Factory will refuse to start training with an error. Common footgun for first-time users.",
+      "TrainingStage enum includes GRPO = 'grpo' but ConfigBuilder has no build_grpo_config() method 鈥?dead enum value, no implementation.",
+      "_compute_bleu in evaluator.py computes bigram overlap without brevity penalty 鈥?this is not a valid BLEU score and will overestimate similarity for short model outputs. Misleadingly named.",
+      "build_sft_config uses lora_target='q_proj,v_proj' but build_cpt_config uses lora_target='all' 鈥?undocumented difference. Users switching between stages may not realize CPT trains all attention layers while SFT only trains query/value.",
+      "example_5_load_config is both commented out in main() AND its logger.info line is also commented out 鈥?incomplete cleanup leaves orphaned comments that confuse readers.",
+      "AncientTextsBenchmark.benchmark_dir defaults to 'src/training/eval/benchmarks' 鈥?same relative path issue as config_builder. Benchmark files will not be found if cwd is not project root.",
+      "save_strategy: str = 'steps' with save_steps=100 but no documentation on how to resume from a specific checkpoint 鈥?resume_from_checkpoint field exists in TrainingConfig but is never set in any of the build_*_config() methods.",
+      "Evaluator results dict (self.results) is never populated in evaluate() 鈥?get_by_category() temporarily swaps self.samples but self.results is always empty, making get_category_stats() always return category totals of 0."
+    ],
+    "approach_changes": 1,
+    "approach_change_detail": "Started with checkpointing documentation (README search). Then found the hardcoded paths issue affects both config_builder AND benchmark.py 鈥?expanded scope to all files in training module. Also found the GRPO dead code while checking the enum.",
+    "root_cause": "Multiple orthogonal issues: relative paths, missing experiment tracking config, stale example code, missing OOM guards, and evaluator.results never populated.",
+    "recommended_fix": "Use Path(__file__).parent.parent.parent / 'models' / 'checkpoints' for output_dir. Add report_to field. Add dataset existence validation. Implement build_grpo_config(). Fix Evaluator to populate self.results in evaluate(). Replace '...' placeholders in example_8."
+  }
+]
+

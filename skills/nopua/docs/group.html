@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NoPUA 微信交流群</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a; color: #e0e0e0; 
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; padding: 20px;
+    }
+    .card {
+      background: #1a1a1a; border-radius: 16px; padding: 40px;
+      max-width: 400px; width: 100%; text-align: center;
+      border: 1px solid #333;
+    }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    .subtitle { color: #888; font-size: 14px; margin-bottom: 24px; }
+    .qr-container {
+      background: white; border-radius: 12px; padding: 16px;
+      display: inline-block; margin-bottom: 24px;
+    }
+    .qr-container img { width: 240px; height: 240px; object-fit: contain; }
+    .note { color: #888; font-size: 13px; line-height: 1.6; }
+    .note a { color: #7c9eff; text-decoration: none; }
+    .footer { margin-top: 24px; color: #555; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>NoPUA 交流群</h1>
+    <p class="subtitle">用智慧驱动 AI，而非恐惧</p>
+    <div class="qr-container">
+      <img src="../assets/wechat-group.jpg" alt="微信①群二维码" 
+           onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%22240%22><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dy=%220.3em%22 font-size=%2216%22 fill=%22%23999%22>群二维码即将开放</text></svg>'">
+    </div>
+    <p class="subtitle">①群快满了？扫码加②群 👇</p>
+    <div class="qr-container">
+      <img src="../assets/wechat-group2.jpg" alt="微信②群二维码" 
+           onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22240%22 height=%22240%22><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dy=%220.3em%22 font-size=%2216%22 fill=%22%23999%22>群二维码即将开放</text></svg>'">
+    </div>
+    <p class="note">
+      群二维码每 7 天更新一次<br>
+      如二维码已过期，请添加作者微信拉群<br>
+      <a href="https://github.com/wuji-labs/nopua">GitHub: wuji-labs/nopua</a>
+    </p>
+    <p class="footer">爱里没有惧怕 · There is no fear in love</p>
+  </div>
+</body>
+</html>

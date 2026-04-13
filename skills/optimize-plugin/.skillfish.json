@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "optimize-plugin",
+  "owner": "fradser",
+  "repo": "dotclaude",
+  "path": "plugin-optimizer/skills/optimize-plugin",
+  "branch": "main",
+  "sha": "2cfbeee5eebc5ffea99884d35bd2b7260d4b3945",
+  "source": "manual"
+}

@@ -1,0 +1,22 @@
+{
+  "name": "windows-control",
+  "version": "1.0.0",
+  "description": "完整的 Windows 桌面控制。鼠标、键盘、截图 - 像人类一样与任何 Windows 应用程序交互。",
+  "main": "SKILL.md",
+  "keywords": [
+    "windows",
+    "automation",
+    "desktop",
+    "control",
+    "gui",
+    "mouse",
+    "keyboard",
+    "openclaw"
+  ],
+  "author": "Spliff7AI",
+  "license": "MIT",
+  "files": [
+    "SKILL.md",
+    "scripts/"
+  ]
+}
